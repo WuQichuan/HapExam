@@ -53,4 +53,13 @@ public interface IOmOrderHeadersService extends IBaseService<OmOrderHeaders>, Pr
       * @return void
       */
      void changeStatus(IRequest request,OmOrderHeaders omOrderHeaders);
+
+     /* *
+      * 为头封装对应的行
+      * @author 武琦川@hand-china.com
+      * @date  2018/8/24 15:47
+      * @param [request, orderHeaders]
+      * @return void
+      */
+     void setLines(IRequest request,List<OmOrderHeaders> orderHeaders);
 }

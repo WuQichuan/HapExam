@@ -4,11 +4,59 @@
     <script type="text/javascript">
         //销售订单头ID
         var headerId = '${RequestParameters.headerId!0}';
-        //指定pdf字体(貌似可解决中文乱码，暂时没有成功)
-        kendo.pdf.defineFont({
-            "DejaVu Sans"             : "../${base.contextPath}/lib/ufonts.com_microsoft-yahei.ttf",
-            "DejaVu Sans|Bold"        : "../${base.contextPath}/lib/ufonts.com_microsoft-yahei.ttf",
-        });
+        var queryFlag = '${RequestParameters.queryFlag!}';
+        //判断查询还是编辑
+        $(function () {
+            if(queryFlag == 1){
+                //头不可编辑
+                $("#orderNumber").attr("readonly",true).css("background", "#EEEEEE");
+                $("#companyId").data("kendoLov").enable(false);
+                $("#customerId").data("kendoLov").enable(false);
+                $("#orderAmount").attr("readonly",true).css("background", "#EEEEEE");
+                $("#orderDate").data("kendoDatePicker").readonly();
+                $("#orderDate").css("background", "#EEEEEE");
+                //按钮显示设置
+                $("#delbtn").kendoButton({
+                    enable: false
+                });
+                $("#newbtn").kendoButton({
+                    enable: false
+                });
+                $("#savebtn").kendoButton({
+                    enable: false
+                })
+                $("#submitbtn").kendoButton({
+                    enable: false
+                });
+                $("#delallbtn").kendoButton({
+                    enable: false
+                });
+                $("#approvebtn").kendoButton({
+                    enable: false
+                });
+                $("#rejectbtn").kendoButton({
+                    enable: false
+                });
+                $("#pdfbtn").kendoButton({
+                    enable: false
+                });
+                //行不可编辑
+                $("#grid").data("kendoGrid").setOptions({
+                    editable: false
+                });
+                $("#grid2").data("kendoGrid").setOptions({
+                    editable: false
+                });
+            }else{
+                $("#grid").data("kendoGrid").setOptions({
+                    editable: true
+                });
+                $("#grid2").data("kendoGrid").setOptions({
+                    editable: true
+                });
+            }
+        })
+
         var viewModel = Hap.createGridViewModel("#grid",{
             model: {},
             //整单删除方法，执行则删除整个销售订单头和其对应的行订单
@@ -26,16 +74,17 @@
                             type:"success",
                             message: '<@spring.message "整单删除成功"/>'
                         });
+                        //刷新父页面
+                        parent.location.reload();
                         //关闭窗口
                         win.close();
                     }
                 });
             },
-            //导出pdf的方法，目前中文无法显示
+            //导出pdf的方法
             getPDF:function(){
-                kendo.drawing.drawDOM($("#page-content")).then(function (group) {
-                    kendo.drawing.pdf.saveAs(group, "销售订单.pdf");
-                });
+                //调用报表的PDF下载链接
+                window.location = "${base.contextPath}/ureport/pdf?_u=database:makePDF.ureport.xml&_n19522&headerId="+headerId;
             },
             //订单提交方法，将订单变为提交状态
             submitFunction:function(){
@@ -56,9 +105,12 @@
                             message: '<@spring.message "订单提交成功"/>'
 
                         });
-                        //关闭窗口
-                        win.close();
-                        //document.location.reload();
+                        //刷新页面
+                        var win = parent.$("#newWin", parent.document).data("kendoWindow");
+                        win.title('<@spring.message "编辑"/>');
+                        parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
+                        win.refresh();
+
                     }
                 });
             },
@@ -107,6 +159,7 @@
             //保存更新方法，保存订单头和订单行
             //既可以保存也可以更新
             saveFunction: function () {
+                var win = parent.$("#newWin" , parent.document).data("kendoWindow");
                 //调用表单校验器校验必输字段
                 var b = $("#myForm").data("kendoValidator").validate();
                 if (!b) {
@@ -116,6 +169,12 @@
                     })
                     return;
                 }
+                //如果订单号为空，则说明现在是新增，需要刷新页面
+                var refreshFlag = "N";
+                if(viewModel.model.orderNumber == null){
+                    refreshFlag = "Y";
+                }
+
                 Hap.submitForm({
                     url: '${base.contextPath}/hap/om/order/headers/submit',
                     formModel: viewModel.model,
@@ -127,10 +186,13 @@
                                 headerId=data.rows[0].headerId;
                             }
                             $('#grid').data('kendoGrid').dataSource.read();
-                            Hap.showToast({
-                                type:"success",
-                                message: '<@spring.message "保存成功"/>'
-                            });
+                           //判断是否需要刷新页面
+                            if(refreshFlag == "Y"){
+                                var win = parent.$("#newWin", parent.document).data("kendoWindow");
+                                win.title('<@spring.message "编辑"/>');
+                                parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
+                                win.refresh();
+                            }
                         }
                         if(headerId){
                             //如果存在headerId赋默认值
@@ -187,6 +249,9 @@
                 rules: {
                 }
             }).data("kendoValidator");
+
+
+
             /*
              根据订单状态控制按钮
              * */
@@ -194,6 +259,7 @@
 
             //如果订单状态为新建，则审批拒绝不可用
             if(viewModel.model.orderStatus =='NEW'){
+
                 $("#approvebtn").kendoButton({
                     enable: false
                 });
@@ -214,8 +280,8 @@
             if(viewModel.model.orderStatus =='SUBMITED'){
                 //头不可编辑
                 $("#orderNumber").attr("readonly",true).css("background", "#EEEEEE");
-                $("#companyId").attr("readonly",true).css("background", "#EEEEEE");
-                $("#customerId").attr("readonly",true).css("background", "#EEEEEE");
+                $("#companyId").data("kendoLov").enable(false);
+                $("#customerId").data("kendoLov").enable(false);
                 $("#orderAmount").attr("readonly",true).css("background", "#EEEEEE");
                 $("#orderDate").data("kendoDatePicker").readonly();
                 $("#orderDate").css("background", "#EEEEEE");
@@ -224,6 +290,13 @@
                     editable: false
                 });
                 //按钮显示设置
+
+                $("#newbtn").kendoButton({
+                    enable: false
+                });
+                $("#delbtn").kendoButton({
+                    enable: false
+                });
                 $("#savebtn").kendoButton({
                     enable: false
                 });
@@ -233,14 +306,15 @@
                 $("#delallbtn").kendoButton({
                     enable: false
                 });
+
             }
 
             //如果订单状态为已审批，则头行不可编辑，保存、提交、删除、审批、拒绝不可用
             if(viewModel.model.orderStatus =='APPROVED'){
                 //头不可编辑
                 $("#orderNumber").attr("readonly",true).css("background", "#EEEEEE");
-                $("#companyId").attr("readonly",true).css("background", "#EEEEEE");
-                $("#customerId").attr("readonly",true).css("background", "#EEEEEE");
+                $("#companyId").data("kendoLov").enable(false);
+                $("#customerId").data("kendoLov").enable(false);
                 $("#orderAmount").attr("readonly",true).css("background", "#EEEEEE");
                 $("#orderDate").data("kendoDatePicker").readonly();
                 $("#orderDate").css("background", "#EEEEEE");
@@ -249,6 +323,12 @@
                     editable: false
                 });
                 //按钮显示设置
+                $("#newbtn").kendoButton({
+                    enable: false
+                });
+                $("#delbtn").kendoButton({
+                    enable: false
+                });
                 $("#savebtn").kendoButton({
                     enable: false
                 });
@@ -267,11 +347,21 @@
 
             }
 
-            if(viewModel.model.orderStatus == null){
+            //如果是新增的订单
+            if(viewModel.model.orderNumber == null){
+                $("#submitbtn").kendoButton({
+                    enable: false
+                });
+                $("#delallbtn").kendoButton({
+                    enable: false
+                });
                 $("#approvebtn").kendoButton({
                     enable: false
                 });
                 $("#rejectbtn").kendoButton({
+                    enable: false
+                });
+                $("#pdfbtn").kendoButton({
                     enable: false
                 });
             }
@@ -309,6 +399,9 @@
                                 "订单编号"/></label>
                             <div class="col-xs-8">
                                 <input id="orderNumber" type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" data-bind="value:model.orderNumber" class="k-textbox" required>
+                                <script>
+                                    $("#orderNumber").attr("readonly",true).css("background", "#EEEEEE");
+                                </script>
                             </div>
                         </div>
                     </div>
@@ -363,8 +456,14 @@
                                 <input  id="orderDate" style="width:150px;margin-right:5px;" data-bind="value:model.orderDate" required>
                             </div>
                             <script>
+                                /*
+                                 * 如果是新增，则为订单赋值默认日期
+                                 * */
+                                if(viewModel.model.orderStatus == null){
+                                    viewModel.model.orderDate = new Date();
+                                }
                                 var datetimepicker = $("#orderDate").kendoDatePicker({
-                                    format: "{0:yyyy-MM-dd}",
+                                    format: "{0:yyyy-MM-dd}"
                                 }).data("kendoDatePicker");
                                 datetimepicker.min(new Date(2016, 0, 1));
                             </script>
@@ -393,6 +492,12 @@
                                 <input id="orderStatus" type="text" style="width:150px;margin-right:5px;" data-bind="value:model.orderStatus">
                             </div>
                             <script>
+                                /*
+                                 * 如果是新增，则为订单赋值新建状态
+                                 * */
+                                if(viewModel.model.orderStatus == null){
+                                    viewModel.model.orderStatus = "NEW";
+                                }
                                 var os = $("#orderStatus").kendoComboBox({
                                     dataSource: orderStatusData,
                                     valuePrimitive: true,
@@ -491,14 +596,29 @@
                     id: "lineId",
                     fields: {
                         //设置gird部分列不可编辑
-                        lineNumber:{editable:false},
-                        itemDescription:{editable:false},
-                        itemUom:{editable:false},
-                        price:{editable:false},
+                        itemDescription:{validation:{disabled:true}},
+                        itemUom:{validation:{disabled:true}},
+                        price:{validation:{disabled:true},defaultValue:0},
                         //设置gird必输字段
                         itemCode: { validation: {required: true}},
                         orderdQuantity: { validation: {required: true,number: true,min:0}},
-                        unitSellingPrice: { validation: {required: true,number: true}}
+                        unitSellingPrice: { validation: {required: true,number: true}},
+                        //设置行号
+                        lineNumber:{
+                            //行号默认值
+                            defaultValue:function () {
+                                var newLineNumber = 0;
+                                //遍历dataSource行号，求出最大行号
+                                for(var i=0;i<dataSource.data().length;i++){
+                                    if(newLineNumber<dataSource.data()[i].lineNumber){
+                                        newLineNumber = dataSource.data()[i].lineNumber
+                                    }
+                                }
+                                //返回最大行号+1
+                                return newLineNumber+1;
+                            },
+                            editable:false
+                        }
                     }
                 }
             }
@@ -532,22 +652,30 @@
                     field: "itemCode",
                     title: '<@spring.message "omorderlines.itemCode"/>',
                     width: 120,
-                    template: function(dataItem) {
-
-                        return dataItem['LOV_ITEMCODE'] ||dataItem.itemCode || ''
+                    template : function (dataItem) {
+                        return dataItem['itemCode'] || '';
                     },
-                    editor: function(container, options) {
+                    editor  : function (container, options) {
                         $('<input required name="' + options.field + '"/>')
                             .appendTo(container)
-                            .kendoLov({
-                                code: "LOV_ITEMCODE",
-                                contextPath: '${base.contextPath}',
-                                locale: '${base.locale}',
-                                select: function (e) {
-                                    options.model.set('description', e.item.roleDescription);
-                                },
-                                model: options.model
-                            });
+                            .kendoLov($.extend(<@lov "LOV_ITEMCODE"/>, {
+                            textField: 'itemCode',
+                            model : options.model,
+                            select:function(e){
+                                options.model.set('inventoryItemId',e.item.inventoryItemId);
+                                options.model.set('itemCode',e.item.itemCode);
+                                options.model.set('itemDescription',e.item.itemDescription);
+                                options.model.set('itemUom',e.item.itemUom);
+                            },
+                            change : function(e){
+                                if (e.sender._prev == '' || e.sender._prev == null) {
+                                    options.model.set('inventoryItemId','');
+                                    options.model.set('itemCode','');
+                                    options.model.set('itemDescription','');
+                                    options.model.set('itemUom','');
+                                }
+                            }
+                        }));
                     }
                 },
                 {
@@ -564,11 +692,84 @@
                 {
                     field: "orderdQuantity",
                     title: '<@spring.message "omorderlines.orderdquantity"/>',
-                    width: 120
+                    width: 120,
+                    editor: function (container, options) {
+                        $('<input id="orderdQuantity" required value="0" name="' + options.field +'" />')
+                            .appendTo(container)
+                            .kendoNumericTextBox({
+                                value: 0,
+                                min: 0,
+                                format: "n0",
+                                change: function () {
+                                    //获取数量
+                                    var count = options.model.orderdQuantity;
+                                    //获取销售单价
+                                    var usp = options.model.unitSellingPrice;
+                                    if(isNaN(usp)){
+                                        usp = 0;
+                                    }
+                                    //为行的金额赋值
+                                    options.model.set('price',count * usp);
+                                    var v = dataSource.data();
+                                    //订单总金额
+                                    var amount = 0;
+                                    //遍历dataSource，累加行金额求出总金额
+                                    for (var i in v) {
+                                        if(isNaN(v[i].price)){
+                                            break;
+                                        }
+                                        amount = parseFloat(amount) + parseFloat(v[i].price);
+                                    }
+                                    //为总金额赋值
+                                    if(isNaN(amount) || amount == 0){
+                                        viewModel.model.set("orderAmount",0);
+                                    }else{
+                                        viewModel.model.set("orderAmount",amount);
+                                    }
+                                }
+                            });
+                    }
+
                 },  {
                     field: "unitSellingPrice",
                     title: '<@spring.message "omorderlines.unitsellingprice"/>',
-                    width: 120
+                    width: 120,
+                    editor: function (container, options) {
+                        $('<input id="unitSellingPrice" required value="0" name="' + options.field +'" />')
+                            .appendTo(container)
+                            .kendoNumericTextBox({
+                                value: 0,
+                                min: 0,
+                                format: "n0",
+                                change: function () {
+                                    //获取数量
+                                    var count = options.model.orderdQuantity;
+                                    //获取销售单价
+                                    var usp = options.model.unitSellingPrice;
+                                    if(isNaN(usp)){
+                                        usp = 0;
+                                    }
+                                    //为行的金额赋值
+                                    options.model.set('price',count * usp);
+                                    var v = dataSource.data();
+                                    //订单总金额
+                                    var amount = 0;
+                                    //遍历dataSource，累加行金额求出总金额
+                                    for (var i in v) {
+                                        if(isNaN(v[i].price)){
+                                            break;
+                                        }
+                                        amount = parseFloat(amount) + parseFloat(v[i].price);
+                                    }
+                                    //为总金额赋值
+                                    if(isNaN(amount) || amount == 0){
+                                        viewModel.model.set("orderAmount",0);
+                                    }else{
+                                        viewModel.model.set("orderAmount",amount);
+                                    }
+                                }
+                            });
+                    }
                 },
                 {
                     field: "price",

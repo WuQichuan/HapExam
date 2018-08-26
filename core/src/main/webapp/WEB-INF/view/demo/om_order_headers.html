@@ -11,8 +11,7 @@
             win.title('<@spring.message "hap.new"/>');
             win.maximize().open();
         },
-        exportFunc : function (e) {
-            //获取grid数据
+        exportFunc: function (e) {
             var originData = dataSource.data();
             excelData(originData);
         },
@@ -190,6 +189,16 @@
         },
         columns: [
             {
+                field: "option",
+                title: '<@spring.message "操作"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var html = '<a href="javascript:void(0)" onclick="view(' + dataItem.headerId + ')" style="text-decoration: underline; color: blue; cursor: pointer;float: left; margin-right: 10px;"><@spring.message "hap.view"/></a>' +
+                        '<a href="javascript:void(0)" onclick="edit(' + dataItem.headerId + ')" style="text-decoration: underline; color: blue; cursor: pointer;float: left; margin-right: 10px;"><@spring.message "hap.edit"/></a>';
+                    return html;
+                }
+            },
+            {
                 field: "orderNumber",
                 title: '<@spring.message "omorderheaders.ordernumber"/>',
                 width: 120,
@@ -252,28 +261,27 @@
 
         /**
          * 1.修改源数据
-         * 修改源数据中需要转换的值，如快码字段("Y"->"是","N"->"否")，时间格式等
          */
-        if (originData.length > 0){ //如果有选中数据则导出数据
-            for (var i in originData){
+        if (originData.length > 0) { //如果有选中数据则导出数据
+            for (var i in originData) {
                 //时间转换
                 originData[i].orderdate = kendo.toString(kendo.parseDate(originData[i].orderdate), "yyyy-MM-dd");
                 //银行类型转换（BUG，后续修复）
                 var v = originData[i].orderStatus;
-                if(v == 'NEW'){
+                if (v == 'NEW') {
                     originData[i].orderStatus = '新建'
                 }
-                if(v == 'SUBMITED'){
+                if (v == 'SUBMITED') {
                     originData[i].orderStatus = '已提交'
                 }
-                if(v == 'APPROVED'){
+                if (v == 'APPROVED') {
                     originData[i].orderStatus = '已审批'
                 }
-                if(v == 'REJECTED'){
+                if (v == 'REJECTED') {
                     originData[i].orderStatus = '已拒绝'
                 }
             }
-        }else {
+        } else {
             return;
         }
 
@@ -284,20 +292,50 @@
         /**
          * 2.1设置excel表格标题
          */
-        var excelTitles = ['<@spring.message "销售订单编号"/>','<@spring.message "公司名称"/>','<@spring.message "客户名称"/>','<@spring.message "订单日期"/>','<@spring.message "订单状态"/>','<@spring.message "订单金额"/>'];
-        //标题数组
+        var excelTitles = [
+            '<@spring.message "omorderheaders.ordernumber"/>',
+            '<@spring.message "omorderheaders.companyname"/>',
+            '<@spring.message "omorderheaders.customername"/>',
+            '<@spring.message "omorderheaders.orderdate"/>',
+            '<@spring.message "omorderheaders.orderstatus"/>',
+        ];
+
+        var excelTitlesLines = [
+            '<@spring.message "omorderlines.itemcode"/>',
+            '<@spring.message "omorderlines.itemdescription"/>',
+            '<@spring.message "omorderlines.orderdquantity"/>',
+            '<@spring.message "omorderlines.unitsellingprice"/>',
+            '<@spring.message "omorderlines.price"/>',
+        ];
+        //头标题数组
         var excelHeader = [];
-        for(var i in excelTitles){
+        for (var i in excelTitles) {
             excelHeader.push({
                 value: excelTitles[i],                    //标题文字
                 background: '#92cddc',                 //标题背景颜色
                 color: '#000',                         //标题字体颜色
                 textAlign: 'center',                     //文字水平对齐方式
                 verticalAlign: 'center',                  //文字竖直对齐方式
-                borderLeft: {size: 1 ,color:"#ddd"},       //左边框大小及颜色
-                borderRight: {size: 1 ,color:"#ddd"},      //右边框大小及颜色
-                borderBottom: { size: 1 ,color:"#ddd"},   //下边框大小及颜色
-                borderTop: { size: 1 ,color:"#ddd"},      //上边框大小及颜色
+                borderLeft: {size: 1, color: "#ddd"},       //左边框大小及颜色
+                borderRight: {size: 1, color: "#ddd"},      //右边框大小及颜色
+                borderBottom: {size: 1, color: "#ddd"},   //下边框大小及颜色
+                borderTop: {size: 1, color: "#ddd"},      //上边框大小及颜色
+            })
+        }
+
+        //行标题数组
+        var excelLines = [];
+        for (var i in excelTitlesLines) {
+            excelLines.push({
+                value: excelTitlesLines[i],                    //标题文字
+                background: '#92cddc',                 //标题背景颜色
+                color: '#000',                         //标题字体颜色
+                textAlign: 'center',                     //文字水平对齐方式
+                verticalAlign: 'center',                  //文字竖直对齐方式
+                borderLeft: {size: 1, color: "#ddd"},       //左边框大小及颜色
+                borderRight: {size: 1, color: "#ddd"},      //右边框大小及颜色
+                borderBottom: {size: 1, color: "#ddd"},   //下边框大小及颜色
+                borderTop: {size: 1, color: "#ddd"},      //上边框大小及颜色
             })
         }
 
@@ -306,28 +344,62 @@
          */
             //最终导出数据
         var excelData = [];
-        //2.2.1将标题添加至导出数据
-        excelData.push({
-            cells: excelHeader
-        });
-        //2.2.2将源数据添加至导出数据
 
-        for(var i=0;i < originData.length;i++){
+        //2.2.2将源数据添加至导出数据
+        for (var i = 0; i < originData.length; i++) {
+            //添加头标题
             excelData.push({
-                cells: [
-                    { value: originData[i].orderNumber, verticalAlign: 'center', textAlign: 'center' },
-                    { value: originData[i].companyName, verticalAlign: 'center', textAlign: 'center'},
-                    { value: originData[i].customerName, verticalAlign: 'center', textAlign: 'center'},
-                    { value: originData[i].orderDate, verticalAlign: 'center', textAlign: 'center'},
-                    { value: originData[i].orderStatus, verticalAlign: 'center', textAlign: 'center'},
-                    { value: originData[i].orderAmount, verticalAlign: 'center', textAlign: 'center'}
-                ],
+                cells: excelHeader
             });
+            //插入头数据
+            excelData.push(
+                {
+                    cells: [
+                        {
+                            value: originData[i].orderNumber,
+                            borderBottom: {size: 1, color: "#ddd"},
+                            borderRight: {size: 1, color: "#ddd"},
+                            verticalAlign: 'center',
+                            textAlign: 'center',
+                            background: '#ff9'
+                        },
+                        {value: originData[i].companyName, verticalAlign: 'center', textAlign: 'center'},
+                        {value: originData[i].customerName, verticalAlign: 'center', textAlign: 'center'},
+                        {value: originData[i].orderDate, verticalAlign: 'center', textAlign: 'center'},
+                        {value: originData[i].orderStatus, verticalAlign: 'center', textAlign: 'center'},
+                    ]
+                });
+            //添加行标题
+            excelData.push({
+                cells: excelLines
+            });
+            var lineData= originData[i].orderLinesList
+            for (var j = 0; j < lineData.length; j++) {
+                //插入行数据
+                excelData.push(
+                    {
+                        cells: [
+                            {
+                                value: lineData[j].itemCode,
+                                borderBottom: {size: 1, color: "#ddd"},
+                                borderRight: {size: 1, color: "#ddd"},
+                                verticalAlign: 'center',
+                                textAlign: 'center',
+                                background: '#ff9'
+                            },
+                            {value: lineData[j].itemDescription, verticalAlign: 'center', textAlign: 'center'},
+                            {value: lineData[j].orderdQuantity, verticalAlign: 'center', textAlign: 'center'},
+                            {value: lineData[j].unitSellingPrice, verticalAlign: 'center', textAlign: 'center'},
+                            {value: lineData[j].price, verticalAlign: 'center', textAlign: 'center'},
+                        ]
+                    });
+            }
         }
+
         //2.2.3设置列宽度与样式
         var columns = [];
-        for(var i = 0;i < excelTitles.length;i++){
-            columns.push({ width: 150 });
+        for (var i = 0; i < excelTitles.length; i++) {
+            columns.push({width: 150});
         }
 
         /**
@@ -351,6 +423,17 @@
             dataURI: workbook.toDataURL(), //数据源
             fileName: '销售订单导出' //文件名
         });
+    }
+
+    //点击查看按钮
+    function view(headerId) {
+        var win = $("#newWin").kendoWindow({
+            iframe: true,
+            draggable: false,
+            content: '${base.contextPath}/demo/om_order_lines.html?queryFlag=1&headerId='+headerId,
+        }).data('kendoWindow');
+        win.title('<@spring.message "查看"/>');
+        win.maximize().open();
     }
 
     //点击编辑按钮

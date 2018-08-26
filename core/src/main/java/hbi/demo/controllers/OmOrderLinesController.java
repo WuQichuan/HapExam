@@ -1,20 +1,22 @@
 package hbi.demo.controllers;
 
-import hbi.demo.dto.InvInventoryItems;
-import hbi.demo.service.IInvInventoryItemsService;
-import org.springframework.stereotype.Controller;
-import com.hand.hap.system.controllers.BaseController;
 import com.hand.hap.core.IRequest;
+import com.hand.hap.system.controllers.BaseController;
 import com.hand.hap.system.dto.ResponseData;
+import hbi.demo.dto.InvInventoryItems;
 import hbi.demo.dto.OmOrderLines;
+import hbi.demo.service.IInvInventoryItemsService;
 import hbi.demo.service.IOmOrderLinesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
 import javax.servlet.http.HttpServletRequest;
-import org.springframework.validation.BindingResult;
+import java.util.ArrayList;
 import java.util.List;
 
     @Controller
@@ -49,6 +51,23 @@ import java.util.List;
 
         return new ResponseData(orderLinesList);
     }
+
+        @RequestMapping(value = "/hap/om/order/lines/getmaxlinenumber")
+        @ResponseBody
+        public ResponseData getMaxLineNumber(OmOrderLines dto) {
+            OmOrderLines orderLines = new OmOrderLines();
+            List<OmOrderLines> orderLinesList = new ArrayList<>();
+            //设置行号为最大行号+1
+            Long maxLineNumber = service.getMaxLineNumber(dto.getHeaderId());
+            if(maxLineNumber == null){
+                maxLineNumber =1L;
+            }else{
+                maxLineNumber++;
+            }
+            orderLines.setLineNumber(maxLineNumber);
+            orderLinesList.add(orderLines);
+            return new ResponseData(orderLinesList);
+        }
 
     @RequestMapping(value = "/hap/om/order/lines/submit")
     @ResponseBody

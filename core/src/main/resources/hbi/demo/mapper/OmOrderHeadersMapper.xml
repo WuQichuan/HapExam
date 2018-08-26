@@ -10,6 +10,4 @@
         <result column="ORDER_STATUS" property="orderStatus" jdbcType="VARCHAR" />
         <result column="CUSTOMER_ID" property="customerId" jdbcType="DECIMAL" />
     </resultMap>
-
-
 </mapper>

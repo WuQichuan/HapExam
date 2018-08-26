@@ -1,7 +1,10 @@
 package hbi.demo.service.impl;
 
+import com.hand.hap.code.rule.exception.CodeRuleException;
+import com.hand.hap.code.rule.service.ISysCodeRuleProcessService;
 import com.hand.hap.core.IRequest;
 import com.hand.hap.system.service.impl.BaseServiceImpl;
+import hbi.demo.dto.InvInventoryItems;
 import hbi.demo.dto.OmOrderHeaders;
 import hbi.demo.dto.OmOrderLines;
 import hbi.demo.service.*;
@@ -10,10 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> implements IOmOrderHeadersService{
     @Autowired
     private IOrgCompanysService orgCompanysService;
@@ -25,6 +29,8 @@ public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> i
     private IOmOrderHeadersService orderHeadersService;
     @Autowired
     private IInvInventoryItemsService iInvInventoryItemsService;
+    @Autowired
+    ISysCodeRuleProcessService codeRuleProcessService;
     @Override
     public void getNamesAndAmount(List<OmOrderHeaders> orderHeadersList) {
         if(orderHeadersList != null && !orderHeadersList.isEmpty()){
@@ -42,9 +48,13 @@ public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> i
                 //统计头订单的总金额
                 Long sumPriceByHeaderId = omOrderLinesService.getSumPriceByHeaderId(orderHeaders.getHeaderId());
                 orderHeaders.setOrderAmount(sumPriceByHeaderId);
+
+
             }
         }
     }
+
+
 
     @Override
     public List<OmOrderHeaders> filterByInventoryItemId(List<OmOrderHeaders> orderHeadersList,Long inventoryItemId) {
@@ -68,6 +78,7 @@ public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> i
         return list;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public List<OmOrderHeaders> myBatchUpdate(IRequest iRequest, List<OmOrderHeaders> orderHeadersList) {
         if(orderHeadersList != null && !orderHeadersList.isEmpty()){
@@ -78,6 +89,18 @@ public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> i
                     //说明是新建
                     //保存头,并且把订单状态设定为新建
                     orderHeaders.setOrderStatus("NEW");
+                    //使用编码规则设置订单号
+                    Map<String,String> map = new HashMap<>();
+                    Long companyId = orderHeaders.getCompanyId();
+                    String companyIdString = companyId.toString();
+                    map.put("var",companyIdString);
+                    try {
+                        String demo = codeRuleProcessService.getRuleCode("ORDER_NUMBER", map);
+                        orderHeaders.setOrderNumber(codeRuleProcessService.getRuleCode("ORDER_NUMBER",map));
+                    } catch (CodeRuleException e) {
+                        e.printStackTrace();
+                    }
+                    //保存头
                     orderHeadersService.insertSelective(iRequest,orderHeaders);
                     //insert之后就有主键了
                     headerId = orderHeaders.getHeaderId();
@@ -87,14 +110,7 @@ public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> i
                         for (OmOrderLines orderLines: orderLinesList) {
                             //为新建的行设置头ID
                             orderLines.setHeaderId(headerId);
-                            //设置行号为最大行号+1
-                            Long maxLineNumber = omOrderLinesService.getMaxLineNumber(headerId);
-                            if(maxLineNumber == null){
-                                maxLineNumber =1L;
-                            }else{
-                                maxLineNumber++;
-                            }
-                            orderLines.setLineNumber(maxLineNumber);
+
                             //为行设置公司ID
                             orderLines.setCompanyId(orderHeaders.getCompanyId());
                             //为新建的行设置物料ID
@@ -165,6 +181,7 @@ public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> i
         return orderHeadersList;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public int myBatchDelect(IRequest request, OmOrderHeaders orderHeaders) {
         int deleteRowCount = 0;
@@ -189,10 +206,40 @@ public class OmOrderHeadersServiceImpl extends BaseServiceImpl<OmOrderHeaders> i
         return deleteRowCount;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void changeStatus(IRequest request,OmOrderHeaders omOrderHeaders) {
         OmOrderHeaders orderHeaders = orderHeadersService.selectByPrimaryKey(request, omOrderHeaders);
         orderHeaders.setOrderStatus(omOrderHeaders.getOrderStatus());
         orderHeadersService.updateByPrimaryKeySelective(request,orderHeaders);
+    }
+
+    @Override
+    public void setLines(IRequest request, List<OmOrderHeaders> orderHeaders) {
+        if(orderHeaders != null && !orderHeaders.isEmpty()){
+            for (OmOrderHeaders orderHeader: orderHeaders) {
+                //根据头id获得对应的行的集合并封装
+                OmOrderLines orderLine = new OmOrderLines();
+                orderLine.setHeaderId(orderHeader.getHeaderId());
+                List<OmOrderLines> select = omOrderLinesService.select(request, orderLine, 1, 0);
+                for (OmOrderLines orderLines: select) {
+                    //说明有物料，则封装物料信息
+                    if(orderLines.getInventoryItemId() != null){
+                        InvInventoryItems invInventoryItems = new InvInventoryItems();
+                        invInventoryItems.setInventoryItemId(orderLines.getInventoryItemId());
+                        InvInventoryItems invInventoryItemsSelect = iInvInventoryItemsService.selectByPrimaryKey(request, invInventoryItems);
+                        if(invInventoryItemsSelect != null ){
+                            orderLines.setItemUom(invInventoryItemsSelect.getItemUom());
+                            orderLines.setItemDescription(invInventoryItemsSelect.getItemDescription());
+                            orderLines.setItemCode(invInventoryItemsSelect.getItemCode());
+                        }
+                    }
+                    //封装订单总金额
+                    orderLines.setPrice(orderLines.getUnitSellingPrice()*orderLines.getOrderdQuantity());
+                }
+                orderHeader.setOrderLinesList(select);
+            }
+        }
+
     }
 }
