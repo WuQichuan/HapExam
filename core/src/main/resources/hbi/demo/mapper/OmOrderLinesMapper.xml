@@ -2,7 +2,8 @@
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="hbi.demo.mapper.OmOrderLinesMapper">
-    <resultMap id="BaseResultMap" type="hbi.demo.dto.OmOrderLines">
+    <resultMap id="BaseResultMap" type="hbi.demo.dto.OmOrderLines" extends="com.hand.hap.mapper.StdMapper.STD"
+    >
         <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
         <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
         <result column="LINE_NUMBER" property="lineNumber" jdbcType="DECIMAL" />
