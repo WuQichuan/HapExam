@@ -220,7 +220,6 @@
                     }
                 });
             }
-
         });
 
         //初始化头部数据，用作编辑时的界面回显
@@ -580,11 +579,33 @@
                 parameterMap: function (options, type) {
                     if (type !== "read" && options.models) {
                         var datas = Hap.prepareSubmitParameter(options, type)
+                        //如果是删除则刷新金额
+                        if(type === "destroy"){
+                            var v = dataSource.data();
+                            //订单总金额
+                            var amount = 0;
+                            //遍历dataSource，累加行金额求出总金额
+                            for (var i in v) {
+                                if(isNaN(v[i].price)){
+                                    break;
+                                }
+                                amount = parseFloat(amount) + parseFloat(v[i].price);
+                            }
+                            //为总金额赋值
+                            if(isNaN(amount) || amount == 0){
+                                viewModel.model.set("orderAmount",0);
+                            }else{
+                                viewModel.model.set("orderAmount",amount);
+                            }
+                        }
                         return kendo.stringify(datas);
                     } else if (type === "read") {
                         return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
                     }
                 }
+            },
+            change: function(e) {
+                //document.location.reload();
             },
             batch: true,
             serverPaging: true,
