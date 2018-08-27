@@ -373,6 +373,11 @@
                     enable: false
                 });
             }
+            if(submitFlag == 'Y'){
+                $("#submitbtn").kendoButton({
+                    enable: true
+                });
+            }
 
             //权限控制，如果配置的审批按钮权限为N，则审批拒绝不可用
             if(approveFlag == 'N'){
@@ -381,6 +386,14 @@
                 });
                 $("#rejectbtn").kendoButton({
                     enable: false
+                });
+            }
+            if(approveFlag == 'Y'){
+                $("#approvebtn").kendoButton({
+                    enable: true
+                });
+                $("#rejectbtn").kendoButton({
+                    enable: true
                 });
             }
 
