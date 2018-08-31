@@ -258,7 +258,9 @@
 
             //如果订单状态为新建，则审批拒绝不可用
             if(viewModel.model.orderStatus =='NEW'){
-
+                $("#submitbtn").kendoButton({
+                    enable: true
+                });
                 $("#approvebtn").kendoButton({
                     enable: false
                 });
@@ -268,6 +270,9 @@
             }
             //如果订单状态为已拒绝，则审批拒绝不可用
             if(viewModel.model.orderStatus =='REJECTED'){
+                $("#submitbtn").kendoButton({
+                    enable: true
+                });
                 $("#approvebtn").kendoButton({
                     enable: false
                 });
@@ -304,6 +309,12 @@
                 });
                 $("#delallbtn").kendoButton({
                     enable: false
+                });
+                $("#approvebtn").kendoButton({
+                    enable: true
+                });
+                $("#rejectbtn").kendoButton({
+                    enable: true
                 });
 
             }
