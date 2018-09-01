@@ -31,7 +31,14 @@
                         <div class="col-xs-8">
                             <input id="companyId" type="text" style="width:150px;margin-right:5px;" data-bind="value:model.companyId,text:model.companyName">
                             <script>
-                                $("#companyId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "LOV_ORG_COMPANYS")}, {}))
+                                $("#companyId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "LOV_ORG_COMPANYS")}, {
+                                    select:function(){
+                                        viewModel.model.set('customerId', null);
+                                    },
+                                    change:function(){
+                                        viewModel.model.set('customerId', null);
+                                    }
+                                }))
                             </script>
                         </div>
                     </div>
@@ -44,10 +51,13 @@
                         <div class="col-xs-8">
                             <input id="customerId" type="text" style="width:150px;margin-right:5px;" data-bind="value:model.customerId,text:model.customerName">
                             <script>
+                                //根据选择的公司ID来决定客户
                                 $("#customerId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "LOV_ARCUSTOMERS")}, {
                                     query: function (e) {
                                         var companyId = $("#companyId").val();
                                         e.param['companyId'] = companyId;
+                                    }, select:function(){
+
                                     }
                                 }));
                             </script>

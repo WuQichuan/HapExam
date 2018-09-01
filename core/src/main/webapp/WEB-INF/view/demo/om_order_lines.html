@@ -131,7 +131,12 @@
                             type:"success",
                             message: '<@spring.message "订单审批成功"/>'
                         });
-                        document.location.reload();
+                        //document.location.reload();
+                        //刷新页面
+                        var win = parent.$("#newWin", parent.document).data("kendoWindow");
+                        win.title('<@spring.message "编辑"/>');
+                        parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
+                        win.refresh();
                     }
                 });
             },
@@ -152,7 +157,12 @@
                             type:"success",
                             message: '<@spring.message "订单拒绝成功"/>'
                         });
-                        document.location.reload();
+                        //document.location.reload();
+                        //刷新页面
+                        var win = parent.$("#newWin", parent.document).data("kendoWindow");
+                        win.title('<@spring.message "编辑"/>');
+                        parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
+                        win.refresh();
                     }
                 });
             },
