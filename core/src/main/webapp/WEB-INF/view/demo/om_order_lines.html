@@ -72,7 +72,7 @@
                     success: function() {
                         Hap.showToast({
                             type:"success",
-                            message: '<@spring.message "整单删除成功"/>'
+                            message: '<@spring.message "deleteAllSuccess"/>'
                         });
                         //刷新父页面
                         parent.location.reload();
@@ -102,12 +102,12 @@
                     success: function() {
                         Hap.showToast({
                             type:"success",
-                            message: '<@spring.message "订单提交成功"/>'
+                            message: '<@spring.message "OrderSubSuccess"/>'
 
                         });
                         //刷新页面
                         var win = parent.$("#newWin", parent.document).data("kendoWindow");
-                        win.title('<@spring.message "编辑"/>');
+                        win.title('<@spring.message "edit"/>');
                         parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
                         win.refresh();
 
@@ -129,12 +129,12 @@
                     success: function() {
                         Hap.showToast({
                             type:"success",
-                            message: '<@spring.message "订单审批成功"/>'
+                            message: '<@spring.message "OrderApproveSuccess"/>'
                         });
                         //document.location.reload();
                         //刷新页面
                         var win = parent.$("#newWin", parent.document).data("kendoWindow");
-                        win.title('<@spring.message "编辑"/>');
+                        win.title('<@spring.message "edit"/>');
                         parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
                         win.refresh();
                     }
@@ -155,12 +155,12 @@
                     success: function() {
                         Hap.showToast({
                             type:"success",
-                            message: '<@spring.message "订单拒绝成功"/>'
+                            message: '<@spring.message "OrderRejectSuccess"/>'
                         });
                         //document.location.reload();
                         //刷新页面
                         var win = parent.$("#newWin", parent.document).data("kendoWindow");
-                        win.title('<@spring.message "编辑"/>');
+                        win.title('<@spring.message "edit"/>');
                         parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
                         win.refresh();
                     }
@@ -175,7 +175,7 @@
                 if (!b) {
                     Hap.showToast({
                         type:"info",
-                        message: $l('<@spring.message "头上存在必输字段未输！"/>')
+                        message: $l('<@spring.message "headHaveNull"/>')
                     })
                     return;
                 }
@@ -199,7 +199,7 @@
                            //判断是否需要刷新页面
                             if(refreshFlag == "Y"){
                                 var win = parent.$("#newWin", parent.document).data("kendoWindow");
-                                win.title('<@spring.message "编辑"/>');
+                                win.title('<@spring.message "edit"/>');
                                 parent.$("#newWin", parent.document).data("kendoWindow").options.content.url = '${base.contextPath}/demo/om_order_lines.html?headerId='+headerId;
                                 win.refresh();
                             }
@@ -225,7 +225,7 @@
                     failure:function (arg) {
                         Hap.showToast({
                             type:"error",
-                            message: '<@spring.message "保存失败"/>'
+                            message: '<@spring.message "saveFailed"/>'
                         });
                     }
                 });
@@ -253,7 +253,7 @@
             // form表单校验
             var validator = $("#myForm").kendoValidator({
                 messages: {
-                    required: '<@spring.message "必输"/>'
+                    required: '<@spring.message "mustWrite"/>'
                 },
                 rules: {
                 }
